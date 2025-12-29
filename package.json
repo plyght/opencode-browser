@@ -1,0 +1,42 @@
+{
+  "name": "opencode-browser",
+  "version": "0.1.0",
+  "type": "module",
+  "description": "Browser automation plugin for OpenCode - AI-controlled headless browser with pixel-perfect terminal display",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "test": "bun test",
+    "playwright:install": "bunx playwright install chromium"
+  },
+  "keywords": [
+    "opencode",
+    "opencode-plugin",
+    "browser",
+    "automation",
+    "playwright",
+    "terminal",
+    "ai"
+  ],
+  "author": "",
+  "license": "Apache-2.0",
+  "dependencies": {
+    "@opencode-ai/plugin": "latest",
+    "playwright": "^1.49.1"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.5",
+    "typescript": "^5.7.2"
+  },
+  "peerDependencies": {
+    "@opencode-ai/plugin": "*"
+  }
+}
