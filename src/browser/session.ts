@@ -2,11 +2,17 @@ import { chromium, type Browser, type BrowserContext, type Page } from 'playwrig
 import { readFile, writeFile, mkdir } from 'fs/promises';
 import { existsSync } from 'fs';
 import { join } from 'path';
+import { AwritManager } from './awrit-manager.js';
 
 export interface SessionConfig {
   workspaceDir: string;
   headless?: boolean;
   viewport?: { width: number; height: number };
+  useAwrit?: boolean;
+}
+
+function isTerminalEnvironment(): boolean {
+  return process.stdout.isTTY && !process.env.DISPLAY && !process.env.ELECTRON_RUN_AS_NODE;
 }
 
 export interface ConsoleMessage {
@@ -30,10 +36,13 @@ export class BrowserSessionManager {
   private stateFile: string;
   private consoleLogs: ConsoleMessage[] = [];
   private networkRequests: NetworkRequest[] = [];
+  private awritManager: AwritManager | null = null;
+  private useAwrit: boolean;
   
   constructor(private config: SessionConfig) {
     this.sessionDir = join(config.workspaceDir, '.opencode', 'browser');
     this.stateFile = join(this.sessionDir, 'session-state.json');
+    this.useAwrit = config.useAwrit ?? isTerminalEnvironment();
   }
   
   async initialize(): Promise<void> {
@@ -41,8 +50,14 @@ export class BrowserSessionManager {
       await mkdir(this.sessionDir, { recursive: true });
     }
     
+    if (this.useAwrit) {
+      this.awritManager = new AwritManager();
+    }
+    
+    const headless = this.useAwrit ? true : (this.config.headless ?? false);
+    
     this.browser = await chromium.launch({
-      headless: this.config.headless ?? true
+      headless
     });
     
     let storageState;
@@ -92,6 +107,13 @@ export class BrowserSessionManager {
   
   async navigate(url: string, waitUntil: 'load' | 'networkidle' = 'load'): Promise<void> {
     if (!this.page) throw new Error('Session not initialized');
+    
+    if (this.awritManager && !this.awritManager['ready']) {
+      await this.awritManager.start(url);
+    } else if (this.awritManager) {
+      this.awritManager.navigate(url);
+    }
+    
     await this.page.goto(url, { waitUntil });
   }
   
@@ -108,6 +130,25 @@ export class BrowserSessionManager {
   async screenshot(fullPage: boolean = false): Promise<Buffer> {
     if (!this.page) throw new Error('Session not initialized');
     return await this.page.screenshot({ fullPage });
+  }
+  
+  async scroll(deltaX: number, deltaY: number): Promise<void> {
+    if (!this.page) throw new Error('Session not initialized');
+    await this.page.mouse.wheel(deltaX, deltaY);
+    this.awritManager?.sendCommand('scroll', [deltaX.toString(), deltaY.toString()]);
+  }
+  
+  async scrollTo(x: number, y: number): Promise<void> {
+    if (!this.page) throw new Error('Session not initialized');
+    await this.page.evaluate(({ x, y }) => window.scrollTo(x, y), { x, y });
+    this.awritManager?.sendCommand('scrollTo', [x.toString(), y.toString()]);
+  }
+  
+  async scrollToElement(selector: string): Promise<void> {
+    if (!this.page) throw new Error('Session not initialized');
+    const element = this.page.locator(selector);
+    await element.scrollIntoViewIfNeeded();
+    this.awritManager?.sendCommand('scrollToElement', [selector]);
   }
   
   async evaluate(script: string): Promise<any> {
@@ -160,10 +201,12 @@ export class BrowserSessionManager {
   
   async close(): Promise<void> {
     await this.saveSession();
+    await this.awritManager?.stop();
     await this.browser?.close();
     this.browser = null;
     this.context = null;
     this.page = null;
+    this.awritManager = null;
   }
   
   getCurrentUrl(): string | null {

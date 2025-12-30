@@ -12,10 +12,12 @@
     }
   },
   "scripts": {
-    "build": "tsc",
+    "build": "tsc && bun run build:awrit",
+    "build:awrit": "cd awrit && ./setup.sh && chmod +x awrit",
     "dev": "tsc --watch",
     "test": "bun test",
-    "playwright:install": "bunx playwright install chromium"
+    "playwright:install": "bunx playwright install chromium",
+    "postinstall": "bun run build:awrit && bun run playwright:install"
   },
   "keywords": [
     "opencode",

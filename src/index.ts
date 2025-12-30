@@ -1,6 +1,5 @@
 import type { Plugin } from '@opencode-ai/plugin';
 import { BrowserSessionManager } from './browser/session.js';
-import { TerminalDisplay } from './terminal/display.js';
 import { LogManager } from './browser/logs.js';
 import { createBrowserTools } from './tools/browser-tools.js';
 import { join } from 'path';
@@ -11,23 +10,15 @@ export const BrowserPlugin: Plugin = async ({ project, directory, worktree }) =>
   
   const session = new BrowserSessionManager({
     workspaceDir,
-    headless: true,
     viewport: { width: 1920, height: 1080 }
   });
   
-  const display = new TerminalDisplay();
   const logManager = new LogManager(logDir);
-  
-  try {
-    await display.initialize();
-  } catch (error) {
-    console.warn('Terminal graphics not available, screenshots will return metadata only:', error);
-  }
   
   await logManager.initialize();
   await session.initialize();
   
-  const tools = createBrowserTools(session, display, logManager);
+  const tools = createBrowserTools(session, logManager);
   
   return {
     tool: tools,

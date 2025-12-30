@@ -1,11 +1,9 @@
 import { tool } from '@opencode-ai/plugin';
 import type { BrowserSessionManager } from '../browser/session.js';
-import type { TerminalDisplay } from '../terminal/display.js';
 import type { LogManager } from '../browser/logs.js';
 
 export function createBrowserTools(
   session: BrowserSessionManager,
-  display: TerminalDisplay,
   logManager: LogManager
 ) {
   return {
@@ -143,6 +141,59 @@ export function createBrowserTools(
       async execute() {
         session.clearLogs();
         return 'Logs cleared';
+      }
+    }),
+
+    browser_scroll: tool({
+      description: 'Scroll the page by specified pixels. Positive values scroll down/right, negative scroll up/left. User sees this in awrit display.',
+      args: {
+        deltaX: tool.schema.number().describe('Horizontal scroll amount in pixels (positive = right, negative = left)').default(0),
+        deltaY: tool.schema.number().describe('Vertical scroll amount in pixels (positive = down, negative = up)')
+      },
+      async execute(args) {
+        await session.scroll(args.deltaX || 0, args.deltaY);
+        return `Scrolled by (${args.deltaX || 0}, ${args.deltaY}) pixels`;
+      }
+    }),
+
+    browser_scroll_to: tool({
+      description: 'Scroll to absolute position on the page. User sees this in awrit display.',
+      args: {
+        x: tool.schema.number().describe('Horizontal position in pixels from left').default(0),
+        y: tool.schema.number().describe('Vertical position in pixels from top')
+      },
+      async execute(args) {
+        await session.scrollTo(args.x || 0, args.y);
+        return `Scrolled to position (${args.x || 0}, ${args.y})`;
+      }
+    }),
+
+    browser_scroll_to_element: tool({
+      description: 'Scroll an element into view using CSS selector. User sees this in awrit display.',
+      args: {
+        selector: tool.schema.string().describe('CSS selector for the element to scroll into view')
+      },
+      async execute(args) {
+        await session.scrollToElement(args.selector);
+        return `Scrolled element ${args.selector} into view`;
+      }
+    }),
+
+    browser_page_down: tool({
+      description: 'Scroll down by one viewport height (page down). User sees this in awrit display.',
+      args: {},
+      async execute() {
+        await session.scroll(0, 800);
+        return 'Scrolled down one page';
+      }
+    }),
+
+    browser_page_up: tool({
+      description: 'Scroll up by one viewport height (page up). User sees this in awrit display.',
+      args: {},
+      async execute() {
+        await session.scroll(0, -800);
+        return 'Scrolled up one page';
       }
     })
   };
