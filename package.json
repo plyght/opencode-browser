@@ -2,7 +2,7 @@
   "name": "opencode-browser",
   "version": "0.1.0",
   "type": "module",
-  "description": "Browser automation plugin for OpenCode - AI-controlled headless browser with pixel-perfect terminal display",
+  "description": "Browser automation plugin for OpenCode - AI-controlled browser with live visible window",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "exports": {

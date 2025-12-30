@@ -1,5 +1,7 @@
 # OpenCode Browser Plugin - Usage Examples
 
+> **Note:** All examples show a **live visible browser window**. You can watch the AI navigate and interact in real-time!
+
 ## Basic Navigation
 
 ```
@@ -84,7 +86,7 @@ AI workflow:
 1. browser_navigate({ url: "http://localhost:3000" })
 2. browser_screenshot({ fullPage: true })
 
-Result: Full-page screenshot displayed in terminal
+Result: Full-page screenshot captured (browser window is visible to user)
 ```
 
 ## Multi-Step Workflow

@@ -1,11 +1,11 @@
 # opencode-browser
 
-Browser automation plugin for OpenCode - AI-controlled headless browser with pixel-perfect terminal display.
+Browser automation plugin for OpenCode - AI-controlled browser with live visible window.
 
 ## Features
 
-- **Headless Browser Automation** - Full Playwright-powered Chromium browser
-- **Pixel-Perfect Terminal Display** - Screenshots rendered directly in your terminal via Kitty, Ghostty, iTerm2, or Sixel protocols
+- **Live Browser Window** - Full Playwright-powered Chromium browser that you can see and watch in real-time
+- **Optional Terminal Screenshots** - Screenshots can also be rendered in your terminal via Kitty, Ghostty, iTerm2, or Sixel protocols
 - **AI-Friendly Logging** - Console and network logs written to grep-able files  
 - **Session Persistence** - Cookies and localStorage persist across sessions per workspace
 - **11 Browser Control Tools** - Navigate, click, type, screenshot, evaluate JS, inspect storage, and more
@@ -33,9 +33,9 @@ bunx playwright install chromium
 }
 ```
 
-### 4. Terminal Requirements
+### 4. Optional: Terminal Requirements for Screenshots
 
-Your terminal must support graphics. Supported terminals:
+The browser window is always visible, but if you want screenshots displayed in the terminal too, use a supported terminal:
 
 - **Kitty** (recommended) - https://sw.kovidgoyal.net/kitty/
 - **Ghostty** - https://ghostty.org/
@@ -43,7 +43,7 @@ Your terminal must support graphics. Supported terminals:
 - **WezTerm** - https://wezfurlong.org/wezterm/
 - **Sixel-compatible terminals** (xterm, mlterm, yaft)
 
-The plugin will automatically detect your terminal's capabilities.
+The plugin will automatically detect your terminal's capabilities and work regardless.
 
 ## Usage
 
@@ -78,7 +78,7 @@ The plugin exposes these tools to the AI:
 | `browser_navigate` | Navigate to a URL with optional wait strategy |
 | `browser_click` | Click an element using CSS selector |
 | `browser_type` | Type text into an input field |
-| `browser_screenshot` | Capture and display screenshot in terminal |
+| `browser_screenshot` | Capture screenshot (browser window is always visible) |
 | `browser_console_logs` | Get console logs (written to file) |
 | `browser_network_requests` | Get network requests (written to file) |
 | `browser_evaluate` | Execute JavaScript in browser context |
@@ -118,11 +118,11 @@ OpenCode AI Agent
        ↓
 Browser Control Tools (this plugin)
        ↓
-Playwright (headless Chromium)
+Playwright (Chromium in headed mode)
        ↓
-Terminal Graphics Protocol (Kitty/iTerm2/Sixel)
-       ↓
-Your Terminal (pixel-perfect screenshot display)
+Live Browser Window (always visible)
+       +
+Optional Terminal Screenshots (Kitty/iTerm2/Sixel)
 ```
 
 ### Session Persistence
@@ -158,7 +158,7 @@ The plugin tests for protocol support in this order:
 2. **iTerm2 Inline Images** (environment variable detection)
 3. **Sixel** (terminal type detection)
 
-If no graphics protocol is available, the plugin will error with helpful installation instructions.
+If no graphics protocol is available, the browser window is still fully functional, just screenshots won't be displayed inline in the terminal.
 
 ## Development
 
@@ -187,7 +187,7 @@ src/
 
 ### "Terminal graphics not supported"
 
-Your terminal doesn't support inline graphics. Install Kitty, Ghostty, or iTerm2.
+The browser window is still visible and fully functional. This warning just means screenshots won't be displayed inline in the terminal. Install Kitty, Ghostty, or iTerm2 if you want that feature.
 
 ### "Playwright browsers not installed"
 

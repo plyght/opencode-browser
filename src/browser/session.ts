@@ -173,4 +173,22 @@ export class BrowserSessionManager {
   async getTitle(): Promise<string | null> {
     return this.page?.title() || null;
   }
+  
+  getCdpUrl(): string | null {
+    if (!this.browser) return null;
+    return (this.browser as any).wsEndpoint?.() || null;
+  }
+  
+  isLoading(): boolean {
+    return false;
+  }
+  
+  async canGoBack(): Promise<boolean> {
+    if (!this.page) return false;
+    return await this.page.evaluate(() => window.history.length > 1);
+  }
+  
+  async canGoForward(): Promise<boolean> {
+    return false;
+  }
 }

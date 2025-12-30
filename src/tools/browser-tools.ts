@@ -49,7 +49,7 @@ export function createBrowserTools(
     }),
 
     browser_screenshot: tool({
-      description: 'Capture a screenshot of the current page and display it in the terminal.',
+      description: 'Capture a screenshot of the current page. Screenshot is rendered in OpenCode UI.',
       args: {
         fullPage: tool.schema
           .boolean()
@@ -58,14 +58,7 @@ export function createBrowserTools(
       },
       async execute(args) {
         const screenshot = await session.screenshot(args.fullPage || false);
-        
-        await display.displayImage(screenshot, {
-          width: 100,
-          height: 50,
-          preserveAspectRatio: true
-        });
-        
-        return `Screenshot captured (${screenshot.length} bytes)\nDisplayed in terminal using ${await display['protocol']}`;
+        return `Screenshot captured (${screenshot.length} bytes)\nRendered in OpenCode UI browser panel.`;
       }
     }),
 

@@ -21,8 +21,7 @@ export const BrowserPlugin: Plugin = async ({ project, directory, worktree }) =>
   try {
     await display.initialize();
   } catch (error) {
-    console.error('Failed to initialize terminal display:', error);
-    throw error;
+    console.warn('Terminal graphics not available, screenshots will return metadata only:', error);
   }
   
   await logManager.initialize();
@@ -48,6 +47,45 @@ export const BrowserPlugin: Plugin = async ({ project, directory, worktree }) =>
       if (url) {
         output.prompt += `\n\nBrowser context: Currently viewing ${url}`;
       }
+    },
+    
+    'ui.browser.register': async () => {
+      const cdpUrl = session.getCdpUrl();
+      if (!cdpUrl) {
+        throw new Error('Browser CDP URL not available');
+      }
+      
+      return {
+        id: 'browser-0',
+        label: 'Browser',
+        cdpUrl,
+        initialUrl: 'about:blank'
+      };
+    },
+    
+    'ui.browser.update': async ({ browserId }: { browserId: string }) => {
+      const url = session.getCurrentUrl() || 'about:blank';
+      const title = await session.getTitle() || '';
+      const loading = session.isLoading();
+      const canGoBack = await session.canGoBack();
+      const canGoForward = await session.canGoForward();
+      
+      return {
+        url,
+        title,
+        loading,
+        canGoBack,
+        canGoForward
+      };
+    },
+    
+    'ui.browser.screenshot': async ({ browserId, width, height }: { browserId: string; width: number; height: number }) => {
+      const data = await session.screenshot(false);
+      
+      return {
+        data,
+        format: 'png' as const
+      };
     }
   };
 };
