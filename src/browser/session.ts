@@ -38,6 +38,7 @@ export class BrowserSessionManager {
   private networkRequests: NetworkRequest[] = [];
   private awritManager: AwritManager | null = null;
   private useAwrit: boolean;
+  private loading: boolean = false;
   
   constructor(private config: SessionConfig) {
     this.sessionDir = join(config.workspaceDir, '.opencode', 'browser');
@@ -103,18 +104,24 @@ export class BrowserSessionManager {
         existing.status = response.status();
       }
     });
+
+    this.page.on('load', () => {
+      this.loading = false;
+    });
   }
   
   async navigate(url: string, waitUntil: 'load' | 'networkidle' = 'load'): Promise<void> {
     if (!this.page) throw new Error('Session not initialized');
+    this.loading = true;
     
-    if (this.awritManager && !this.awritManager['ready']) {
+    if (this.awritManager && !this.awritManager.isReady()) {
       await this.awritManager.start(url);
     } else if (this.awritManager) {
       this.awritManager.navigate(url);
     }
     
     await this.page.goto(url, { waitUntil });
+    this.loading = false;
   }
   
   async click(selector: string): Promise<void> {
@@ -223,7 +230,7 @@ export class BrowserSessionManager {
   }
   
   isLoading(): boolean {
-    return false;
+    return this.loading;
   }
   
   async canGoBack(): Promise<boolean> {
@@ -232,6 +239,13 @@ export class BrowserSessionManager {
   }
   
   async canGoForward(): Promise<boolean> {
-    return false;
+    if (!this.page) return false;
+    return await this.page.evaluate(() => {
+      const state = window.history.state as { index?: number } | null;
+      if (state && typeof state.index === 'number') {
+        return state.index < window.history.length - 1;
+      }
+      return false;
+    });
   }
 }

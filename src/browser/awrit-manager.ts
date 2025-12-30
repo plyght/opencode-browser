@@ -1,5 +1,6 @@
 import { spawn, type ChildProcess } from 'child_process';
-import { join } from 'path';
+import { fileURLToPath } from 'url';
+import { dirname, join } from 'path';
 
 export class AwritManager {
   private process: ChildProcess | null = null;
@@ -7,7 +8,10 @@ export class AwritManager {
   private ready: boolean = false;
 
   constructor(awritPath?: string) {
-    this.awritPath = awritPath || join(__dirname, '../../awrit/awrit');
+    const __filename = fileURLToPath(import.meta.url);
+    const __dirname = dirname(__filename);
+    const resolvedDefault = join(__dirname, '../../awrit/awrit');
+    this.awritPath = awritPath || process.env.AWRIT_PATH || resolvedDefault;
   }
 
   async start(initialUrl?: string): Promise<void> {
@@ -38,8 +42,9 @@ export class AwritManager {
   }
 
   private async waitForReady(): Promise<void> {
+    const delay = Number(process.env.AWRIT_READY_DELAY_MS || '1000');
     return new Promise((resolve) => {
-      setTimeout(resolve, 1000);
+      setTimeout(resolve, Number.isFinite(delay) ? delay : 1000);
     });
   }
 
@@ -67,6 +72,10 @@ export class AwritManager {
 
   forward(): void {
     this.sendCommand('forward');
+  }
+
+  isReady(): boolean {
+    return this.ready;
   }
 
   private cleanup(): void {
