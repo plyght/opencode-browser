@@ -1,30 +1,29 @@
-# opencode-browser
+# OpenCode Browser
 
-Browser automation plugin for OpenCode - AI-controlled browser with live visible window.
+AI-controlled browser automation with live visual feedback and persistent sessions. Extends OpenCode agents with 11 browser control tools built on Playwright.
+
+## Overview
+
+OpenCode Browser bridges the gap between AI agents and the web by providing programmatic browser control with real-time visibility. While traditional automation runs headless, this plugin maintains a visible browser window alongside optional terminal graphics, giving both AI and human operators immediate visual feedback. Session state persists across workspaces, allowing agents to maintain context through authentication flows and multi-step workflows.
 
 ## Features
 
-- **Live Browser Window** - Full Playwright-powered Chromium browser that you can see and watch in real-time
-- **Optional Terminal Screenshots** - Screenshots can also be rendered in your terminal via Kitty, Ghostty, iTerm2, or Sixel protocols
-- **AI-Friendly Logging** - Console and network logs written to grep-able files  
-- **Session Persistence** - Cookies and localStorage persist across sessions per workspace
-- **11 Browser Control Tools** - Navigate, click, type, screenshot, evaluate JS, inspect storage, and more
+- **Live Browser Window**: Full Playwright-powered Chromium browser visible during automation
+- **Persistent Sessions**: Cookies, localStorage, and sessionStorage persist per workspace
+- **Terminal Graphics**: Screenshots render in-terminal via Kitty, Ghostty, iTerm2, or Sixel protocols
+- **File-Based Logging**: Console and network logs written to grep-able files instead of dumped to AI
+- **11 Control Tools**: Navigate, click, type, screenshot, evaluate JS, inspect storage, and more
+- **Cross-Platform**: Works on macOS, Linux, and BSD variants
+- **Zero Configuration**: Automatic graphics protocol detection and fallback
 
 ## Installation
 
-### 1. Install the plugin
-
 ```bash
 bun add opencode-browser
-```
-
-### 2. Install Playwright browsers
-
-```bash
 bunx playwright install chromium
 ```
 
-### 3. Add to OpenCode config
+Add to OpenCode configuration:
 
 ```json
 {
@@ -33,101 +32,55 @@ bunx playwright install chromium
 }
 ```
 
-### 4. Optional: Terminal Requirements for Screenshots
-
-The browser window is always visible, but if you want screenshots displayed in the terminal too, use a supported terminal:
-
-- **Kitty** (recommended) - https://sw.kovidgoyal.net/kitty/
-- **Ghostty** - https://ghostty.org/
-- **iTerm2** (macOS) - https://iterm2.com/
-- **WezTerm** - https://wezfurlong.org/wezterm/
-- **Sixel-compatible terminals** (xterm, mlterm, yaft)
-
-The plugin will automatically detect your terminal's capabilities and work regardless.
+For terminal screenshot rendering, use a supported terminal:
+- Kitty (recommended)
+- Ghostty
+- iTerm2 (macOS)
+- WezTerm
+- Sixel-compatible terminals (xterm, mlterm, yaft)
 
 ## Usage
 
-### Basic Commands
+All tools are exposed to the AI agent automatically. Example commands:
 
 ```
-Navigate to a URL:
-> @ai Navigate to localhost:3000
-
-Click an element:
-> @ai Click the submit button (selector: button#submit)
-
-Type into an input:
-> @ai Type "test@example.com" into the email field (selector: input#email)
-
-Take a screenshot:
-> @ai Take a screenshot of the current page
-
-Get console logs:
-> @ai Show me the console logs
-
-Inspect network requests:
-> @ai Show network requests for API calls
+Navigate to localhost:3000
+Click the submit button (selector: button#submit)
+Type "test@example.com" into email field (selector: input#email)
+Take a screenshot of the current page
+Show me the console logs
+Show network requests for API calls
 ```
 
-### Available Tools
-
-The plugin exposes these tools to the AI:
+Available tools:
 
 | Tool | Description |
 |------|-------------|
-| `browser_navigate` | Navigate to a URL with optional wait strategy |
-| `browser_click` | Click an element using CSS selector |
-| `browser_type` | Type text into an input field |
-| `browser_screenshot` | Capture screenshot (browser window is always visible) |
-| `browser_console_logs` | Get console logs (written to file) |
-| `browser_network_requests` | Get network requests (written to file) |
-| `browser_evaluate` | Execute JavaScript in browser context |
+| `browser_navigate` | Navigate to URL with optional wait strategy |
+| `browser_click` | Click element using CSS selector |
+| `browser_type` | Type text into input field |
+| `browser_screenshot` | Capture screenshot |
+| `browser_console_logs` | Get console logs |
+| `browser_network_requests` | Get network requests |
+| `browser_evaluate` | Execute JavaScript in context |
 | `browser_storage_get` | Get localStorage and sessionStorage |
 | `browser_storage_set` | Set localStorage item |
 | `browser_current_url` | Get current URL |
 | `browser_clear_logs` | Clear console and network logs |
 
-### Example Workflows
-
-**Test a web form:**
-```
-> @ai Navigate to localhost:3000, fill out the login form with username "test" and password "demo", then click submit
-```
-
-**Debug console errors:**
-```
-> @ai Navigate to my-app.com, click around, then show me any console errors
-```
-
-**Inspect API calls:**
-```
-> @ai Load the dashboard and show me all POST requests to /api/
-```
-
-**Visual inspection:**
-```
-> @ai Navigate to homepage and take a screenshot
-```
-
-## How It Works
-
-### Architecture
+## Architecture
 
 ```
 OpenCode AI Agent
        ↓
-Browser Control Tools (this plugin)
+Browser Control Tools
        ↓
-Playwright (Chromium in headed mode)
+Playwright (Chromium headed mode)
        ↓
-Live Browser Window (always visible)
-       +
-Optional Terminal Screenshots (Kitty/iTerm2/Sixel)
+Live Browser Window + Optional Terminal Graphics
 ```
 
-### Session Persistence
-
-Each OpenCode workspace gets its own browser session stored at:
+Session data stored at:
 
 ```
 .opencode/browser/
@@ -137,82 +90,37 @@ Each OpenCode workspace gets its own browser session stored at:
     └── network.log     # HTTP requests and responses
 ```
 
-Sessions persist across plugin reloads, so you stay logged in.
+Logs are file-based following Cursor's pattern: written to disk for selective inspection rather than dumped to AI context. Agents can use OpenCode's `grep` tool to inspect logs.
 
-### Log Management
+Graphics protocol detection order:
+1. Kitty Graphics Protocol (query-based)
+2. iTerm2 Inline Images (environment variables)
+3. Sixel (terminal type detection)
 
-Following Cursor's pattern, logs are written to files instead of dumped to the AI. This saves tokens and allows selective inspection:
+## Configuration
 
-```bash
-grep "ERROR" .opencode/browser/logs/console.log
-grep "POST.*api" .opencode/browser/logs/network.log
-```
+No configuration required. The plugin automatically detects workspace directory and terminal capabilities.
 
-The AI can use OpenCode's `grep` tool to inspect logs selectively.
-
-### Terminal Graphics Detection
-
-The plugin tests for protocol support in this order:
-
-1. **Kitty Graphics Protocol** (query-based detection - works for Kitty, Ghostty, etc.)
-2. **iTerm2 Inline Images** (environment variable detection)
-3. **Sixel** (terminal type detection)
-
-If no graphics protocol is available, the browser window is still fully functional, just screenshots won't be displayed inline in the terminal.
+Optional environment variables:
+- `TERM`: Terminal type for Sixel detection
+- `TERM_PROGRAM`: Terminal program for iTerm2 detection
 
 ## Development
 
-### Build
-
 ```bash
 bun run build
+bun test
 ```
 
-### Project Structure
+Project structure:
 
-```
-src/
-├── index.ts              # Main plugin entry point
-├── browser/
-│   ├── session.ts        # BrowserSessionManager (Playwright)
-│   └── logs.ts           # LogManager (file-based logging)
-├── terminal/
-│   ├── graphics.ts       # Graphics protocol detection
-│   └── display.ts        # TerminalDisplay (screenshot rendering)
-└── tools/
-    └── browser-tools.ts  # Tool definitions for OpenCode
-```
+- `src/index.ts`: Plugin entry point and lifecycle hooks
+- `src/browser/session.ts`: BrowserSessionManager (Playwright wrapper)
+- `src/browser/logs.ts`: LogManager (file-based logging)
+- `src/tools/browser-tools.ts`: Tool definitions for OpenCode
 
-## Troubleshooting
-
-### "Terminal graphics not supported"
-
-The browser window is still visible and fully functional. This warning just means screenshots won't be displayed inline in the terminal. Install Kitty, Ghostty, or iTerm2 if you want that feature.
-
-### "Playwright browsers not installed"
-
-Run: `bunx playwright install chromium`
-
-### Screenshots not displaying
-
-Check your terminal emulator supports graphics:
-
-```bash
-echo $TERM
-echo $TERM_PROGRAM
-```
-
-For Kitty/Ghostty: should respond to graphics queries  
-For iTerm2: `TERM_PROGRAM` should be `iTerm.app`
-
-### Logs not appearing
-
-Logs are written to `.opencode/browser/logs/`. Check file permissions.
+Requires Bun 1.0+, TypeScript 5.7+. Key dependencies: @opencode-ai/plugin, playwright.
 
 ## License
 
 Apache-2.0
-
-## Credits
-
-Inspired by Cursor's browser feature. Built for OpenCode.
